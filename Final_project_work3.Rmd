@@ -1,0 +1,132 @@
+---
+title: "Final_project_work3"
+author: "Ninna Nataly Iriondo Castro Friis"
+date: "2022-12-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+#I load the different library packages, so I can use the tools
+```{r}
+library(tidyverse)
+library(here)
+library(dplyr)
+library(tidytext)
+library(pdftools)
+library(readxl)
+```
+
+#I make a vector with list of the dataset from 1371-1400 and name it "filnavne"
+```{r}
+list.files("Data_1371_1400", full.names = TRUE) -> filnavne
+```
+
+#Combine the dataset from 1371 to 1998, because the dataset from 1999-1400 do not contain the letters that I can use, I will not combine it - The name will still be 1371-1400, because it does it a lot easier
+```{r}
+DRB_1371_1400 <- tibble()
+tmp_df <- tibble()
+fil <- c()
+for (fil in filnavne){
+  print(fil)
+  tmp_df <- read_excel(fil)
+  tmp_df <- tmp_df %>% 
+    mutate(Nummer= as.numeric(Nummer))
+  DRB_1371_1400 <- bind_rows(DRB_1371_1400, tmp_df)
+}
+```
+
+#Convert the raw dataset from excel fil to csv and import to Jupyter Lab to extract the names
+```{r}
+DRB_1367_1370.csv <- read_csv2("Data_1367_1370/Datasæt_DRB_1367_1370.xlsx")
+```
+#Read the 1367-1370_name csv files in R, which is importet from Jupyter Lab
+```{r}
+DRB_1367_1370_name <- read_csv2("Data/DRB_1367_1370_name.csv")
+```
+#split the column ",doc_id,name" to 3 seperated columns
+```{r}
+DRB_1367_1370_name[c('number', 'doc_id', 'name')] <- str_split_fixed(DRB_1367_1370_name$",doc_id,name", ',', 3)
+```
+
+
+#Split the text in the column "name" into words using to tokens function
+```{r}
+DRB_tokens1 <- DRB_1367_1370_name %>% 
+  unnest_tokens(word, ",doc_id,name")
+```
+
+#Create a stopwordlist and make it a dataframe
+```{r}
+stop_words1 <- tibble(word=c("Gud","Guds","Margrete","Valdemar","Eder","'","Eders","eder","eders","margrete","margretes","valdemar","gud","guds", "oluf","v","van","Erik","erik"))
+```
+
+#Remove the stopwordlist from the wordlist "DRB_tokens1"
+```{r}
+DRB_stop1 <- DRB_tokens1 %>%
+  anti_join(stop_words1)
+```
+
+#count the names and look which 10 names occur most often
+```{r}
+DRB_1367_1370_names_count <- DRB_stop1 %>% 
+  count(word, sort = TRUE) %>% 
+  head(10) 
+```
+
+#rename the column "word" to "name"
+```{r}
+names(DRB_1367_1370_names_count)[names(DRB_1367_1370_names_count)=="word"] <- "name"
+```
+
+
+#Put the 10 names into a ggplot with geom columns, reorder it and color it
+```{r}
+ggplot(data = DRB_1367_1370_names_count, aes(x = reorder(name, -n), y = n, color=name, fill=name))+
+  geom_col() +
+  labs(x="name")
+
+```
+
+#Read the csv file from 1371_1400_name from Jupyter Lab into R
+```{r}
+DRB_1371_1400_names <- read.csv("Data/DRB_1371_1400_name.csv")
+```
+
+#split the text in the column "name" into words
+```{r}
+DRB_tokens2 <- DRB_1371_1400_names %>% 
+  unnest_tokens(word, name)
+```
+#I use the same stopwordlist
+
+#remove the stopwordlist from the wordlist "DRB_tokens2"
+```{r}
+DRB_stop2 <- DRB_tokens2 %>%
+  anti_join(stop_words1)
+```
+
+#count the names and look which 10 names occur most often
+```{r}
+DRB_1371_1400_names_count <- DRB_stop2 %>% 
+  count(word, sort = TRUE) %>% 
+  head(10)
+```
+
+#rename the column "word" to "name"
+```{r}
+names(DRB_1371_1400_names_count)[names(DRB_1371_1400_names_count)=="word"] <- "name"
+```
+
+
+#Put the 10 names into a ggplot with geom columns, color it and reorder it
+```{r}
+ggplot(data = DRB_1371_1400_names_count, aes(x = reorder(name, -n), y = n, color=name, fill=name))+
+  geom_col() +
+  labs(x="name")
+  
+```
+
